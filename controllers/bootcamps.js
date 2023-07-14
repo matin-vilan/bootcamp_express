@@ -7,10 +7,71 @@ const Bootcamp = require("../models/Bootcamp");
 // @route    GET /api/v1/bootcamps
 // @access   Public
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-  const bootcamps = await Bootcamp.find();
+  let query;
+
+  const reqQuery = { ...req.query };
+
+  const removeFileds = ["select", "sort", "page", "limit"];
+
+  removeFileds.forEach((param) => delete reqQuery[param]);
+
+  let queryStr = JSON.stringify(reqQuery);
+  queryStr = queryStr.replace(
+    /\b(gt|gte|lt|lte|in)\b/g,
+    (match) => `$${match}`
+  );
+  query = Bootcamp.find(JSON.parse(queryStr));
+
+  // Select fields
+  if (req.query.select) {
+    const fields = req.query.select.split(",").join(" ");
+    query = query.select(fields);
+  }
+
+  // Sort
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(",").join(" ");
+    query = query.sort(sortBy);
+  } else {
+    query = query.sort("-createdAt");
+  }
+
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 25;
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const total = await Bootcamp.countDocuments();
+
+  query = query.skip(startIndex).limit(limit);
+
+  const bootcamps = await query;
+
+  // Pagination result
+  const Pagination = {};
+
+  if (endIndex < total) {
+    Pagination.next = {
+      page: page + 1,
+      limit,
+    };
+  }
+
+  if (startIndex > 0) {
+    Pagination.prev = {
+      page: page - 1,
+      limit,
+    };
+  }
+
   res
     .status(200)
-    .json({ success: true, count: bootcamps.length, data: bootcamps });
+    .json({
+      success: true,
+      count: bootcamps.length,
+      Pagination,
+      data: bootcamps,
+    });
 });
 
 // @desc     Get all bookcamps
