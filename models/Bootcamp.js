@@ -135,7 +135,6 @@ BootcampsSchema.pre("save", async function (next) {
 
 // Cascade delete courses when a bootcamp is deleted
 BootcampsSchema.pre("remove", async function (next) {
-  console.log(this._id);
   await this.model("Course").deleteMany({ bootcamp: this._id });
   next();
 });
