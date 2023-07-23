@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const morgan = require("morgan");
 const colors = require("colors");
 const fileupload = require("express-fileupload");
+const cookieParser = require("cookie-parser");
 const errorHandler = require("./middleware/error");
 const connectDB = require("./config/db");
 
@@ -19,6 +20,9 @@ const courses = require("./routes/courses");
 const auth = require("./routes/auth");
 
 const app = express();
+
+// Cookie parser
+app.use(cookieParser());
 
 // Body parser
 app.use(express.json());
